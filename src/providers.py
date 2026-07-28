@@ -135,9 +135,26 @@ class MockProvider(BaseLLMProvider):
     """Offline Mock Provider (Cho bài test không cần kết nối API)"""
     def generate(self, prompt: str, system_prompt: str = "") -> str:
         text = prompt.lower()
-        if "thời tiết" in text and "hà nội" in text:
-            return "Thought: Cần tra cứu thời tiết Hà Nội.\nAction: get_weather['Hà Nội']"
-        return "🤖 [Mock Provider]: Phản hồi giả lập offline cho bài test."
+        if "lookup_order" in text or "dh12345" in text or "dh67890" in text or "dh55555" in text or "khongtontai999" in text:
+            if "dh12345" in text:
+                return "Thought: Cần tra cứu trạng thái đơn hàng.\nAction: lookup_order['DH12345']"
+            if "dh67890" in text:
+                return "Thought: Cần xác minh đơn và điều kiện đổi trả.\nAction: lookup_order['DH67890']"
+            if "dh55555" in text:
+                return "Thought: Cần kiểm tra đơn quá hạn và không tự động hoàn tiền.\nAction: lookup_order['DH55555']"
+            if "khongtontai999" in text:
+                return "Thought: Cần xác minh mã đơn và phản hồi trung thực.\nAction: lookup_order['KHONGTONTAI999']"
+        if "check_return_eligibility" in text or "đổi trả" in text and "dh67890" in text:
+            return "Thought: Cần kiểm tra điều kiện đổi trả cho đơn này.\nAction: check_return_eligibility['DH67890']"
+        if "calculate_refund_amount" in text or "hoàn" in text and "dh67890" in text:
+            return "Thought: Đã xác minh điều kiện đổi trả, bây giờ tính tiền hoàn.\nAction: calculate_refund_amount['DH67890', 'defective']"
+        if "không tự động" in text or "escalate" in text:
+            return "Thought: Tool không thể hoàn tiền do quá hạn, cần chuyển sang hỗ trợ nhân viên.\nAction: escalate_to_human['DH55555']"
+        if "chính sách đổi trả" in text and "shop" in text:
+            return "Thought: Câu hỏi này chỉ cần trả lời chính sách chung mà không dùng tool.\nFinal Answer: Thông thường chính sách đổi trả áp dụng trong 7-15 ngày, tùy theo từng shop."
+        if "giấy tờ" in text or "thông tin" in text:
+            return "Thought: Câu hỏi này chỉ cần trả lời quy trình chung.\nFinal Answer: Khi đổi trả, bạn cần chuẩn bị mã đơn, lý do đổi trả, biên lai/hoá đơn và thông tin liên hệ."
+        return "Thought: Tôi cần xem xét câu hỏi kỹ hơn.\nAction: lookup_order['DH12345']"
 
 
 def get_llm_provider(provider_name: str = None) -> BaseLLMProvider:

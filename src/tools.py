@@ -76,10 +76,72 @@ def check_return_policy(order_date: str, product_type: str) -> str:
         return f"Lỗi check_return_policy: {str(e)}"
 
 
+def lookup_order(order_id: str) -> str:
+    """
+    Tra cứu đơn hàng theo mã đơn và trả về trạng thái, ngày mua, hoặc thông báo nếu không tồn tại.
+    """
+    try:
+        if order_id.upper() == "DH12345":
+            return "Đơn DH12345 đang ở trạng thái delivered. Giao hàng thành công."
+        if order_id.upper() == "DH67890":
+            return "Đơn DH67890 tồn tại. Ngày mua: 3 ngày trước. Sản phẩm: Tai nghe Bluetooth X200."
+        if order_id.upper() == "DH55555":
+            return "Đơn DH55555 đã mua 3 tháng trước. Trạng thái: quá hạn đổi trả."
+        if order_id.upper() == "KHONGTONTAI999":
+            return "Lỗi lookup_order: Đơn không tồn tại."
+        return f"Đơn {order_id} tồn tại nhưng dữ liệu chi tiết chưa được mô phỏng."
+    except Exception as e:
+        return f"Lỗi lookup_order: {str(e)}"
+
+
+def check_return_eligibility(order_id: str) -> str:
+    """
+    Kiểm tra điều kiện đổi trả cho đơn hàng theo mã đơn.
+    """
+    try:
+        if order_id.upper() == "DH67890":
+            return "Hợp lệ — trong hạn 7 ngày, lý do 'sản phẩm lỗi' thuộc diện được đổi trả."
+        if order_id.upper() == "DH55555":
+            return "Không hợp lệ — đơn đã quá hạn đổi trả."
+        if order_id.upper() == "KHONGTONTAI999":
+            return "Lỗi check_return_eligibility: Đơn không tồn tại."
+        return "Không đủ dữ liệu để xác định điều kiện đổi trả cho đơn hàng này."
+    except Exception as e:
+        return f"Lỗi check_return_eligibility: {str(e)}"
+
+
+def calculate_refund_amount(order_id: str, reason: str) -> str:
+    """
+    Tính số tiền hoàn trả dựa trên mã đơn và lý do đổi trả.
+    """
+    try:
+        if order_id.upper() == "DH67890" and reason.lower() in ["defective", "lỗi", "sản phẩm lỗi"]:
+            return "Hoàn 100% giá trị đơn hàng = 590.000đ."
+        if order_id.upper() == "DH55555":
+            return "Không thể hoàn tiền: đơn đã quá hạn đổi trả."
+        return "Không thể tính được số tiền hoàn trả do thông tin không đủ hoặc lý do chưa được hỗ trợ."
+    except Exception as e:
+        return f"Lỗi calculate_refund_amount: {str(e)}"
+
+
+def escalate_to_human(order_id: str) -> str:
+    """
+    Chuyển yêu cầu đến bộ phận hỗ trợ con người khi agent không thể xử lý tự động.
+    """
+    try:
+        return f"Yêu cầu của đơn {order_id} đã được chuyển đến bộ phận hỗ trợ trực tiếp."
+    except Exception as e:
+        return f"Lỗi escalate_to_human: {str(e)}"
+
+
 # Danh sách các tool được đăng ký để Agent sử dụng
 AVAILABLE_TOOLS = {
     "get_order": get_order,
     "track_shipment": track_shipment,
     "create_return_request": create_return_request,
     "check_return_policy": check_return_policy,
+    "lookup_order": lookup_order,
+    "check_return_eligibility": check_return_eligibility,
+    "calculate_refund_amount": calculate_refund_amount,
+    "escalate_to_human": escalate_to_human,
 }

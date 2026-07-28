@@ -41,17 +41,53 @@
 
 ## 🧪 3. TRACE TỪ `src/app.py`
 
-**Thought 1**: Câu hỏi này cần tra cứu thông tin đơn hàng.
-
-**Action 1**: `get_order['OD12345', 'abc@example.com']`
-
-**Observation 1**: `Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể.`
-
-**Thought 2**: Tôi đã có thông tin đơn hàng, giờ tôi có thể báo trạng thái và danh sách sản phẩm.
-
-**Final Answer**: `Đơn hàng OD12345 hiện đang trong trạng thái shipping. Dự kiến giao trong 2 ngày.`
+## Trace Test Case 1
+**Question**: Chính sách đổi trả hàng thông thường của shop áp dụng trong bao nhiêu ngày?
+* **Thought 1**: Tôi cần kiểm tra chính sách đổi trả hàng để biết thời gian áp dụng cho người dùng.
+* **Action 1**: `check_return_policy[order_date, product_type]`
+* **Observation 1**: `Chức năng check_return_policy đã được khai báo nhưng chưa triển khai cụ thể.`
+* **Final Answer**: Xin quý khách vui lòng cung cấp ngày đặt hàng và loại sản phẩm mà quý khách muốn biết chính sách đổi trả để tôi có thể hỗ trợ tốt nhất.
 
 ---
+## Trace Test Case 2
+**Question**: Nếu tôi muốn đổi trả hàng thì cần chuẩn bị những giấy tờ/thông tin gì?
+* **Thought 1**: Tôi cần kiểm tra điều kiện và thời hạn đổi trả cho sản phẩm mà khách hàng muốn đổi trả. Tuy nhiên, tôi cần thông tin về ngày đặt hàng và loại sản phẩm để có thể thực hiện kiểm tra.
+* **Action 1**: `check_return_policy[order_date, product_type]`
+* **Observation 1**: `Chức năng check_return_policy đã được khai báo nhưng chưa triển khai cụ thể.`
+* **Final Answer**: Xin vui lòng cung cấp cho tôi thông tin về ngày đặt hàng và loại sản phẩm mà bạn muốn đổi trả để tôi có thể giúp bạn kiểm tra điều kiện và thời hạn đổi trả.
+
+---
+## Trace Test Case 3
+**Question**: Đơn hàng #DH12345 của tôi hiện đang ở trạng thái nào rồi?
+* **Thought 1**: Tôi cần tra cứu thông tin chi tiết đơn hàng #DH12345 để biết trạng thái hiện tại của nó.
+* **Action 1**: `get_order[DH12345, None]`
+* **Observation 1**: `Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể.`
+* **Final Answer**: Xin vui lòng cung cấp thông tin số điện thoại hoặc email của bạn để tôi có thể tra cứu trạng thái đơn hàng #DH12345 chính xác hơn. Cảm ơn bạn!
+
+---
+## Trace Test Case 4
+**Question**: Đơn #DH67890 tôi mới mua, kiểm tra giúp tôi đơn này có còn đủ điều kiện đổi trả không?
+* **Thought 1**: Tôi cần kiểm tra ngày đặt hàng và loại sản phẩm trong đơn hàng #DH67890 để xác định xem có đủ điều kiện đổi trả hay không. Tôi sẽ tra cứu thông tin chi tiết đơn hàng trước.
+* **Action 1**: `get_order[DH67890, contact]`
+* **Observation 1**: `Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể.`
+* **Thought 2**: Tôi cần thực hiện hành động get_order để lấy thông tin chi tiết về đơn hàng #DH67890, bao gồm ngày đặt hàng và loại sản phẩm.
+* **Action 2**: `get_order[DH67890, contact]`
+* **Observation 2**: `Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể.`
+* **Thought 3**: Tôi chưa có đủ thông tin chi tiết về đơn hàng #DH67890 để kiểm tra đủ điều kiện đổi trả. Tôi cần phải thực hiện hành động get_order một lần nữa để lấy thông tin cần thiết.
+* **Action 3**: `get_order[DH67890, contact]`
+* **Observation 3**: `Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể.`
+* **Final Answer**: Xin lỗi, nhưng tôi không thể kiểm tra thông tin đơn hàng #DH67890 mà không có số điện thoại hoặc email của bạn. Vui lòng cung cấp thông tin liên lạc để tôi có thể hỗ trợ bạn tốt hơn!
+
+---
+## Trace Test Case 5
+**Question**: Đơn #DH67890 của tôi bị lỗi khi mở hộp, tôi muốn trả hàng thì được hoàn bao nhiêu tiền?
+* **Thought 1**: Tôi cần tra cứu thông tin chi tiết đơn hàng #DH67890 để kiểm tra điều kiện và chính sách đổi trả cho sản phẩm này. Tôi sẽ bắt đầu bằng việc lấy thông tin chi tiết của đơn hàng.
+* **Action 1**: `get_order[DH67890, contact]`
+* **Observation 1**: `Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể.`
+* **Final Answer**: Xin vui lòng cung cấp số điện thoại hoặc địa chỉ email của bạn để tôi có thể tra cứu chi tiết đơn hàng #DH67890 và giúp bạn kiểm tra điều kiện đổi trả. Cảm ơn bạn!
+
+---
+
 
 ## 🧪 4. TRACE EDGE-CASE & GUARDRAIL
 
@@ -61,11 +97,10 @@
 
 **Running trace**:
 
-* **Thought 1**: Câu hỏi này cần tra cứu thông tin đơn hàng.
-* **Action 1**: `get_order['OD12345', 'abc@example.com']`
+* **Thought 1**: Để xử lý yêu cầu hoàn tiền cho đơn hàng #DH55555, tôi cần tra cứu thông tin chi tiết về đơn hàng này trước. Điều này sẽ giúp tôi xác định tình trạng đơn hàng và các lựa chọn hoàn tiền có thể có.
+* **Action 1**: `get_order[DH55555, None]`
 * **Observation 1**: `Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể.`
-* **Thought 2**: Tôi đã có thông tin đơn hàng, giờ tôi có thể báo trạng thái và danh sách sản phẩm.
-* **Final Answer**: `Đơn hàng OD12345 hiện đang trong trạng thái shipping. Dự kiến giao trong 2 ngày.`
+* **Final Answer**: Xin lỗi, tôi không thể tra cứu thông tin đơn hàng mà không có số điện thoại hoặc địa chỉ email của bạn. Vui lòng cung cấp thông tin đó để tôi có thể tiếp tục hỗ trợ bạn.
 
 **Kết luận**: Với cấu hình guardrail `MAX_ITERATIONS = 5`, agent không bị kẹt lặp vô hạn; bài test edge-case hoàn thành trong 2 bước. Tuy nhiên, hiện tại logic tool và flow vẫn là stub cứng, nên trace chưa phản ánh đầy đủ hành vi đa nhánh thực tế cho câu bẫy.
 

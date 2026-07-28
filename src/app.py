@@ -6,6 +6,7 @@ File chính ghép nối tất cả các thành phần: Tools + Prompts + Test Ca
 import json
 import os
 import sys
+import re
 from dotenv import load_dotenv
 
 # Đảm bảo import các module cùng thư mục src/ hoạt động mượt mà
@@ -50,32 +51,145 @@ def run_baseline_chatbot(user_query: str, provider):
     print(f"🤖 Chatbot trả lời:\n{response}")
 
 
+def parse_agent_response(response: str) -> tuple[str, str | None, str | None]:
+    """Trích xuất Thought, Action và Final Answer từ phản hồi LLM."""
+    thought = None
+    action = None
+    final_answer = None
+    for line in response.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        lower = line.lower()
+        if lower.startswith("thought:"):
+            thought = line.split(":", 1)[1].strip()
+        elif lower.startswith("action:"):
+            action = line.split(":", 1)[1].strip()
+        elif lower.startswith("final answer:"):
+            final_answer = line.split(":", 1)[1].strip()
+    return thought, action, final_answer
+
+
+def parse_action(action: str) -> tuple[str | None, list[str], str | None]:
+    """Phân tích cú pháp Action dạng tool[arg1, arg2]."""
+    if not action:
+        return None, [], "Không có Action để thực thi."
+
+    match = re.match(r"^([a-zA-Z_][\w]*)\s*\[\s*(.*?)\s*\]$", action)
+    if not match:
+        return None, [], f"Cú pháp Action không hợp lệ: {action}"
+
+    tool_name = match.group(1)
+    args_text = match.group(2)
+    args = []
+    if args_text:
+        args = [arg.strip().strip("'\"") for arg in args_text.split(",")]
+    return tool_name, args, None
+
+
+def execute_tool(action: str) -> tuple[str, bool]:
+    """Thực thi tool và trả về Observation cùng chỉ báo lỗi nếu có."""
+    tool_name, args, parse_error = parse_action(action)
+    if parse_error:
+        return parse_error, True
+
+    if tool_name not in AVAILABLE_TOOLS:
+        return f"Lỗi tool: '{tool_name}' không hợp lệ.", True
+
+    try:
+        result = AVAILABLE_TOOLS[tool_name](*args)
+        is_error = isinstance(result, str) and result.strip().lower().startswith("lỗi")
+        return result, is_error
+    except Exception as exc:
+        return f"Lỗi thực thi tool {tool_name}: {str(exc)}", True
+
+
+def build_agent_prompt(user_query: str, history: list[dict]) -> str:
+    """Xây dựng prompt cho LLM bằng câu hỏi và lịch sử Thought/Action/Observation."""
+    prompt_lines = [f"User Query: {user_query}"]
+    if history:
+        prompt_lines.append("History:")
+        for step, item in enumerate(history, start=1):
+            prompt_lines.append(f"Thought {step}: {item['thought']}")
+            prompt_lines.append(f"Action {step}: {item['action']}")
+            prompt_lines.append(f"Observation {step}: {item['observation']}")
+    return "\n".join(prompt_lines)
+
+
+def append_trace_to_doc(test_id: int, question: str, history: list[dict], final_answer: str | None) -> None:
+    """Nối trace log vào docs/trace_eval.md để review sau này."""
+    trace_lines = [
+        "\n---\n",
+        f"## Trace Test Case {test_id}\n",
+        f"**Question**: {question}\n",
+    ]
+    for idx, item in enumerate(history, start=1):
+        trace_lines.append(f"* **Thought {idx}**: {item['thought']}\n")
+        trace_lines.append(f"* **Action {idx}**: `{item['action']}`\n")
+        trace_lines.append(f"* **Observation {idx}**: `{item['observation']}`\n")
+    if final_answer:
+        trace_lines.append(f"* **Final Answer**: {final_answer}\n")
+    else:
+        trace_lines.append("* **Final Answer**: [Chưa có Final Answer trước khi chạm guardrail]\n")
+
+    with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "trace_eval.md"), "a", encoding="utf-8") as f:
+        f.writelines(trace_lines)
+
+
 def run_react_agent(user_query: str, provider):
-    """
-    Dựng vòng lặp ReAct Agent (Thought -> Action -> Observation) có Guardrails.
-    """
+    """Duyệt vòng lặp ReAct Agent và retry nếu chọn sai tool hoặc tool trả về lỗi."""
     print(f"\n🤖 [REACT AGENT] Câu hỏi: {user_query}")
+    history = []
     step = 0
-    
+    final_answer = None
+
     while step < MAX_ITERATIONS:
         step += 1
         print(f"\n--- 🔄 Vòng lặp ReAct (Step {step}/{MAX_ITERATIONS}) ---")
-        
-        if step == 1:
-            print("🧠 Thought: Câu hỏi này cần tra cứu thông tin đơn hàng.")
-            print("🛠️ Action: get_order['OD12345', 'abc@example.com']")
-            
-            # Thực thi tool
-            obs = get_order("OD12345", "abc@example.com")
-            print(f"👁️ Observation: {obs}")
-            
-        elif step == 2:
-            print("🧠 Thought: Tôi đã có thông tin đơn hàng, giờ tôi có thể báo trạng thái và danh sách sản phẩm.")
-            print("🏁 Final Answer: Đơn hàng OD12345 hiện đang trong trạng thái shipping. Dự kiến giao trong 2 ngày.")
+
+        prompt = build_agent_prompt(user_query, history)
+        response = provider.generate(prompt, system_prompt=REACT_SYSTEM_PROMPT)
+        thought, action, final = parse_agent_response(response)
+
+        if thought:
+            print(f"🧠 Thought: {thought}")
+        else:
+            print("🧠 Thought: [Không có Thought rõ ràng]")
+
+        if final:
+            print(f"🏁 Final Answer: {final}")
+            final_answer = final
             break
-            
-    if step >= MAX_ITERATIONS:
+
+        if action:
+            print(f"🛠️ Action: {action}")
+            observation, tool_failed = execute_tool(action)
+        else:
+            observation = "Lỗi: Agent không cung cấp Action."
+            tool_failed = True
+
+        print(f"👁️ Observation: {observation}")
+        history.append({"thought": thought or "[Không có Thought]", "action": action or "[Không có Action]", "observation": observation})
+
+        if tool_failed:
+            print("⚠️ Phát hiện lỗi trong bước này, sẽ suy luận lại và thử công cụ khác nếu cần.")
+            continue
+
+    if not final_answer and step >= MAX_ITERATIONS:
         print(f"🛡️ GUARDRAIL TRIGGERED: Đã đạt giới hạn tối đa {MAX_ITERATIONS} bước. Ngắt lặp an toàn!")
+
+    return history, final_answer
+
+
+def run_all_tests(provider):
+    tests = load_test_cases()
+    for test in tests:
+        print(f"\n============================")
+        print(f"TEST CASE {test['id']}: {test['question']}")
+        print(f"============================")
+        run_baseline_chatbot(test['question'], provider)
+        history, final_answer = run_react_agent(test['question'], provider)
+        append_trace_to_doc(test['id'], test['question'], history, final_answer)
 
 
 if __name__ == "__main__":
@@ -83,19 +197,9 @@ if __name__ == "__main__":
     print("🏫 ĐẠI HỌC VINUNI - BÀI LAB 3: CHATBOT VS REACT AGENT")
     print("==================================================")
     
-    # Khởi tạo Multi-Provider LLM Adapter (Đọc từ biến môi trường LLM_PROVIDER)
     provider = get_llm_provider()
     model_name = getattr(provider, "model_name", "Offline Mock Mode")
     print(f"🔌 LLM Provider đang hoạt động: {provider.__class__.__name__} (Model: {model_name})")
     
-    tests = load_test_cases()
-    print(f"✅ Đã tải thành công {len(tests)} Test Cases từ config/test_cases.json\n")
-    
-    # Chạy thử câu test số 3
-    sample_query = tests[2]["question"]
-    
-    print("--- DEMO 1: CHẠY TRÊN CHATBOT BASELINE ---")
-    run_baseline_chatbot(sample_query, provider)
-    
-    print("\n--- DEMO 2: CHẠY TRÊN REACT AGENT ---")
-    run_react_agent(sample_query, provider)
+    print("--- CHẠY TOÀN BỘ TEST CASES ---")
+    run_all_tests(provider)
