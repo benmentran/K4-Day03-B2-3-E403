@@ -15,7 +15,11 @@ def get_order(order_id: str, contact: str) -> str:
     Returns:
         str: Thông tin trạng thái đơn, danh sách sản phẩm và thời gian giao hàng dự kiến.
     """
-    return "Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể."
+    try:
+        # TODO: Thêm logic tra cứu đơn hàng thực tế ở đây.
+        return "Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể."
+    except Exception as e:
+        return f"Lỗi get_order: {str(e)}"
 
 
 def track_shipment(tracking_code: str) -> str:
@@ -28,7 +32,11 @@ def track_shipment(tracking_code: str) -> str:
     Returns:
         str: Trạng thái giao hàng của đơn hàng, bao gồm vị trí hiện tại và tình trạng vận chuyển.
     """
-    return "Chức năng track_shipment đã được khai báo nhưng chưa triển khai cụ thể."
+    try:
+        # TODO: Thêm logic theo dõi vận chuyển thực tế ở đây.
+        return "Chức năng track_shipment đã được khai báo nhưng chưa triển khai cụ thể."
+    except Exception as e:
+        return f"Lỗi track_shipment: {str(e)}"
 
 
 def create_return_request(order_id: str, reason: str, item_id: str) -> str:
@@ -43,7 +51,11 @@ def create_return_request(order_id: str, reason: str, item_id: str) -> str:
     Returns:
         str: Kết quả khởi tạo yêu cầu đổi trả, gồm bước tiếp theo hoặc thông báo lỗi nếu không hợp lệ.
     """
-    return "Chức năng create_return_request đã được khai báo nhưng chưa triển khai cụ thể."
+    try:
+        # TODO: Thêm logic xử lý yêu cầu đổi trả ở đây.
+        return "Chức năng create_return_request đã được khai báo nhưng chưa triển khai cụ thể."
+    except Exception as e:
+        return f"Lỗi create_return_request: {str(e)}"
 
 
 def check_return_policy(order_date: str, product_type: str) -> str:
@@ -57,7 +69,11 @@ def check_return_policy(order_date: str, product_type: str) -> str:
     Returns:
         str: Thông tin có thể đổi trả, deadline và điều kiện áp dụng.
     """
-    return "Chức năng check_return_policy đã được khai báo nhưng chưa triển khai cụ thể."
+    try:
+        # TODO: Thêm logic kiểm tra chính sách đổi trả ở đây.
+        return "Chức năng check_return_policy đã được khai báo nhưng chưa triển khai cụ thể."
+    except Exception as e:
+        return f"Lỗi check_return_policy: {str(e)}"
 
 
 # Danh sách các tool được đăng ký để Agent sử dụng
