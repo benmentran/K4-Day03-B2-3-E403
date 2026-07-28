@@ -74,7 +74,9 @@ def parse_agent_response(response: str) -> tuple[str, str | None, str | None]:
             thought = line.split(":", 1)[1].strip()
         elif lower.startswith("action:"):
             action = line.split(":", 1)[1].strip()
-        elif lower.startswith("final answer:"):
+        elif lower.startswith("final answer:") or lower.startswith("final:"):
+            final_answer = line.split(":", 1)[1].strip()
+        elif lower.startswith("answer:") and final_answer is None:
             final_answer = line.split(":", 1)[1].strip()
     return thought, action, final_answer
 
@@ -123,27 +125,6 @@ def build_agent_prompt(user_query: str, history: list[dict]) -> str:
             prompt_lines.append(f"Action {step}: {item['action']}")
             prompt_lines.append(f"Observation {step}: {item['observation']}")
     return "\n".join(prompt_lines)
-
-
-def append_trace_to_doc(test_id: int, question: str, history: list[dict], final_answer: str | None) -> None:
-    """Nối trace log vào docs/trace_eval.md để review sau này."""
-    trace_lines = [
-        "\n---\n",
-        f"## Trace Test Case {test_id}\n",
-        f"**Question**: {question}\n",
-    ]
-    for idx, item in enumerate(history, start=1):
-        trace_lines.append(f"* **Thought {idx}**: {item['thought']}\n")
-        trace_lines.append(f"* **Action {idx}**: `{item['action']}`\n")
-        trace_lines.append(f"* **Observation {idx}**: `{item['observation']}`\n")
-    if final_answer:
-        trace_lines.append(f"* **Final Answer**: {final_answer}\n")
-    else:
-        trace_lines.append("* **Final Answer**: [Chưa có Final Answer trước khi chạm guardrail]\n")
-
-    with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "trace_eval.md"), "a", encoding="utf-8") as f:
-        f.writelines(trace_lines)
-
 
 def run_react_agent(user_query: str, provider, return_details: bool = False) -> Dict[str, Any]:
     """Duyệt vòng lặp ReAct Agent và retry nếu chọn sai tool hoặc tool trả về lỗi."""
@@ -210,9 +191,15 @@ def run_all_tests(provider):
         print(f"TEST CASE {test['id']}: {test['question']}")
         print(f"============================")
         run_baseline_chatbot(test['question'], provider)
-        history, final_answer = run_react_agent(test['question'], provider)
-        append_trace_to_doc(test['id'], test['question'], history, final_answer)
-
+        react_result = run_react_agent(test['question'], provider)
+        history = react_result["steps"]
+        final_answer = react_result["final_answer"]
+        
+        print(f"\n--- ReAct Agent Steps ---")
+        for i, step in enumerate(history, start=1):
+            print(f"Step {i}: Thought: {step['thought']} | Action: {step['action']} | Observation: {step['observation']}")
+        print(f"\n🏁 Final Answer from ReAct Agent: {final_answer}")
+        
 
 if __name__ == "__main__":
     print("==================================================")

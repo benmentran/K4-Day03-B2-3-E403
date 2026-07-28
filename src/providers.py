@@ -135,27 +135,63 @@ class MockProvider(BaseLLMProvider):
     """Offline Mock Provider (Cho bài test không cần kết nối API)"""
     def generate(self, prompt: str, system_prompt: str = "") -> str:
         text = prompt.lower()
-        if "dh67890" in text and "observation" in text:
-            return "Thought: Đã xác minh thông tin đơn hàng.\nFinal Answer: Đối với đơn DH67890 bị lỗi khi mở hộp, bạn được hoàn 100% giá trị đơn hàng."
-        if "calculate_refund_amount" in text or ("hoàn" in text and "dh67890" in text):
+
+        def contains_observation(key: str) -> bool:
+            return f"observation" in text and key in text
+
+        # Nếu đã có observation từ lịch sử, trả final answer dựa trên kết quả đó
+        if contains_observation("dh12345") and "delivered" in text:
+            return (
+                "Thought: Tôi đã xác nhận trạng thái đơn hàng."
+                "\nFinal Answer: Đơn DH12345 đang ở trạng thái delivered."
+                " Ngày mua: 2026-07-25. Sản phẩm: Áo thun VinUni M, Túi xách Canvas. Trạng thái vận chuyển: Giao hàng thành công."
+            )
+        if contains_observation("dh55555") and "quá hạn đổi trả" in text:
+            return (
+                "Thought: Tôi đã xác minh đơn quá hạn đổi trả."
+                "\nFinal Answer: Đơn DH55555 đã giao lâu và quá hạn đổi trả, hiện tại không thể hoàn 100% theo chính sách."
+            )
+        if contains_observation("khongtontai999") and "đơn không tồn tại" in text:
+            return (
+                "Thought: Tôi đã xác minh mã đơn không tồn tại."
+                "\nFinal Answer: Mã đơn KHONGTONTAI999 không tồn tại. Vui lòng kiểm tra lại mã đơn hoặc liên hệ tổng đài để được hỗ trợ."
+            )
+        if contains_observation("dh67890") and "hợp lệ" in text:
+            return (
+                "Thought: Tôi đã xác minh điều kiện đổi trả.\n"
+                "Action: calculate_refund_amount['DH67890', 'defective']"
+            )
+        if contains_observation("dh67890") and "hoàn 100% giá trị đơn hàng" in text:
+            return (
+                "Thought: Hoàn tất tính toán hoàn tiền."
+                "\nFinal Answer: Đối với đơn DH67890 bị lỗi khi mở hộp, bạn được hoàn 100% giá trị đơn hàng."
+            )
+
+        if "chính sách đổi trả" in text and "shop" in text:
+            return (
+                "Thought: Câu hỏi này chỉ cần trả lời chính sách chung mà không dùng tool."
+                "\nFinal Answer: Thông thường chính sách đổi trả áp dụng trong 7-15 ngày, tùy theo từng shop."
+            )
+        if "giấy tờ" in text or "thông tin" in text:
+            return (
+                "Thought: Câu hỏi này chỉ cần trả lời quy trình chung."
+                "\nFinal Answer: Khi đổi trả, bạn cần chuẩn bị mã đơn, lý do đổi trả, biên lai/hoá đơn và thông tin liên hệ."
+            )
+        if "calculate_refund_amount" in text or ("hoàn" in text and "dh67890" in text and "check_return_eligibility" not in text):
             return "Thought: Đã xác minh điều kiện đổi trả, bây giờ tính tiền hoàn.\nAction: calculate_refund_amount['DH67890', 'defective']"
         if "check_return_eligibility" in text or (("đổi trả" in text or "trả hàng" in text) and "dh67890" in text):
             return "Thought: Cần kiểm tra điều kiện đổi trả cho đơn này.\nAction: check_return_eligibility['DH67890']"
-        if "lookup_order" in text or "dh12345" in text or "dh67890" in text or "dh55555" in text or "khongtontai999" in text:
-            if "dh12345" in text:
-                return "Thought: Cần tra cứu trạng thái đơn hàng.\nAction: lookup_order['DH12345']"
-            if "dh67890" in text:
-                return "Thought: Cần xác minh đơn và điều kiện đổi trả.\nAction: lookup_order['DH67890']"
-            if "dh55555" in text:
-                return "Thought: Cần kiểm tra đơn quá hạn và không tự động hoàn tiền.\nAction: lookup_order['DH55555']"
-            if "khongtontai999" in text:
-                return "Thought: Cần xác minh mã đơn và phản hồi trung thực.\nAction: lookup_order['KHONGTONTAI999']"
-        if "không tự động" in text or "escalate" in text:
-            return "Thought: Tool không thể hoàn tiền do quá hạn, cần chuyển sang hỗ trợ nhân viên.\nAction: escalate_to_human['DH55555']"
-        if "chính sách đổi trả" in text and "shop" in text:
-            return "Thought: Câu hỏi này chỉ cần trả lời chính sách chung mà không dùng tool.\nFinal Answer: Thông thường chính sách đổi trả áp dụng trong 7-15 ngày, tùy theo từng shop."
-        if "giấy tờ" in text or "thông tin" in text:
-            return "Thought: Câu hỏi này chỉ cần trả lời quy trình chung.\nFinal Answer: Khi đổi trả, bạn cần chuẩn bị mã đơn, lý do đổi trả, biên lai/hoá đơn và thông tin liên hệ."
+        if "dh12345" in text and "lookup_order" in text:
+            return "Thought: Cần tra cứu trạng thái đơn hàng.\nAction: lookup_order['DH12345']"
+        if "dh55555" in text and "lookup_order" in text:
+            return "Thought: Cần kiểm tra đơn quá hạn và không tự động hoàn tiền.\nAction: lookup_order['DH55555']"
+        if "khongtontai999" in text and "lookup_order" in text:
+            return "Thought: Cần xác minh mã đơn và phản hồi trung thực.\nAction: lookup_order['KHONGTONTAI999']"
+        if "dh67890" in text and "lookup_order" in text:
+            return "Thought: Cần xác minh đơn và điều kiện đổi trả.\nAction: lookup_order['DH67890']"
+        if "lookup_order" in text:
+            return "Thought: Tôi cần tra cứu thông tin đơn hàng.\nAction: lookup_order['DH12345']"
+
         return "Thought: Tôi cần xem xét câu hỏi kỹ hơn.\nAction: lookup_order['DH12345']"
 
 
