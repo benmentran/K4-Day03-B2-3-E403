@@ -6,6 +6,7 @@ File chính ghép nối tất cả các thành phần: Tools + Prompts + Test Ca
 import json
 import os
 import sys
+from typing import Any, Dict, List
 from dotenv import load_dotenv
 
 # Đảm bảo import các module cùng thư mục src/ hoạt động mượt mà
@@ -38,7 +39,7 @@ def load_test_cases():
         return json.load(f)
 
 
-def run_baseline_chatbot(user_query: str, provider):
+def run_baseline_chatbot(user_query: str, provider, return_details: bool = False) -> Dict[str, Any]:
     """
     Dựng Chatbot gốc (Baseline) không có công cụ.
     """
@@ -49,33 +50,58 @@ def run_baseline_chatbot(user_query: str, provider):
     response = provider.generate(user_query, system_prompt=CHATBOT_BASELINE_PROMPT)
     print(f"🤖 Chatbot trả lời:\n{response}")
 
+    if return_details:
+        return {
+            "mode": "baseline",
+            "user_query": user_query,
+            "system_prompt": CHATBOT_BASELINE_PROMPT.strip(),
+            "response": response,
+        }
+    return response
 
-def run_react_agent(user_query: str, provider):
+
+def run_react_agent(user_query: str, provider, return_details: bool = False) -> Dict[str, Any]:
     """
     Dựng vòng lặp ReAct Agent (Thought -> Action -> Observation) có Guardrails.
     """
     print(f"\n🤖 [REACT AGENT] Câu hỏi: {user_query}")
     step = 0
+    steps: List[Dict[str, str]] = []
     
     while step < MAX_ITERATIONS:
         step += 1
         print(f"\n--- 🔄 Vòng lặp ReAct (Step {step}/{MAX_ITERATIONS}) ---")
         
         if step == 1:
-            print("🧠 Thought: Câu hỏi này cần tra cứu thông tin đơn hàng.")
-            print("🛠️ Action: get_order['OD12345', 'abc@example.com']")
-            
-            # Thực thi tool
+            thought = "Câu hỏi này cần tra cứu thông tin đơn hàng."
+            action = "get_order['OD12345', 'abc@example.com']"
             obs = get_order("OD12345", "abc@example.com")
+            print(f"🧠 Thought: {thought}")
+            print(f"🛠️ Action: {action}")
             print(f"👁️ Observation: {obs}")
+            steps.append({"step": str(step), "thought": thought, "action": action, "observation": obs})
             
         elif step == 2:
-            print("🧠 Thought: Tôi đã có thông tin đơn hàng, giờ tôi có thể báo trạng thái và danh sách sản phẩm.")
-            print("🏁 Final Answer: Đơn hàng OD12345 hiện đang trong trạng thái shipping. Dự kiến giao trong 2 ngày.")
+            final_answer = "Đơn hàng OD12345 hiện đang trong trạng thái shipping. Dự kiến giao trong 2 ngày."
+            thought = "Tôi đã có thông tin đơn hàng, giờ tôi có thể báo trạng thái và danh sách sản phẩm."
+            print(f"🧠 Thought: {thought}")
+            print(f"🏁 Final Answer: {final_answer}")
+            steps.append({"step": str(step), "thought": thought, "action": "Final Answer", "observation": final_answer})
             break
             
     if step >= MAX_ITERATIONS:
         print(f"🛡️ GUARDRAIL TRIGGERED: Đã đạt giới hạn tối đa {MAX_ITERATIONS} bước. Ngắt lặp an toàn!")
+
+    if return_details:
+        return {
+            "mode": "react",
+            "user_query": user_query,
+            "system_prompt": REACT_SYSTEM_PROMPT.strip(),
+            "steps": steps,
+            "final_answer": steps[-1]["observation"] if steps else "Không có kết quả." ,
+            "guardrail_triggered": step >= MAX_ITERATIONS,
+        }
+    return steps[-1]["observation"] if steps else "Không có kết quả."
 
 
 if __name__ == "__main__":
