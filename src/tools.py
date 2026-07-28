@@ -3,47 +3,67 @@
 Nơi khai báo tất cả các "món đồ nghề" mà ReAct Agent có thể gọi.
 """
 
-def get_weather(location: str) -> str:
+
+def get_order(order_id: str, contact: str) -> str:
     """
-    Tra cứu thời tiết hiện tại của một thành phố.
-    
+    Tra cứu thông tin đơn hàng theo mã đơn và số điện thoại hoặc email.
+
     Args:
-        location (str): Tên thành phố (Ví dụ: 'Hà Nội', 'TP.HCM', 'Đà Nẵng')
-        
+        order_id (str): Mã đơn hàng cần tra cứu.
+        contact (str): Số điện thoại hoặc email của khách hàng.
+
     Returns:
-        str: Thông tin thời tiết chi tiết
+        str: Thông tin trạng thái đơn, danh sách sản phẩm và thời gian giao hàng dự kiến.
     """
-    loc_lower = location.lower()
-    if "hà nội" in loc_lower or "ha noi" in loc_lower:
-        return "Thời tiết Hà Nội: 28°C, Nắng nhẹ, Độ ẩm 65%."
-    elif "hồ chí minh" in loc_lower or "tp.hcm" in loc_lower or "hcm" in loc_lower:
-        return "Thời tiết TP.HCM: 33°C, Nắng nóng, Có mây."
-    elif "đà nẵng" in loc_lower or "da nang" in loc_lower:
-        return "Thời tiết Đà Nẵng: 30°C, Gió nhẹ, Mát mẻ."
-    else:
-        return f"LỖI: Không tìm thấy dữ liệu thời tiết cho địa điểm '{location}'."
+    return "Chức năng get_order đã được khai báo nhưng chưa triển khai cụ thể."
 
 
-def search_flights(origin: str, destination: str) -> str:
+def track_shipment(tracking_code: str) -> str:
     """
-    Tra cứu chuyến bay giữa hai địa điểm.
-    
+    Theo dõi hành trình vận chuyển dựa trên mã theo dõi.
+
     Args:
-        origin (str): Nơi đi (Ví dụ: 'TP.HCM')
-        destination (str): Nơi đến (Ví dụ: 'Hà Nội')
-        
+        tracking_code (str): Mã vận đơn của đơn hàng.
+
     Returns:
-        str: Danh sách chuyến bay khả dụng và giá vé
+        str: Trạng thái giao hàng của đơn hàng, bao gồm vị trí hiện tại và tình trạng vận chuyển.
     """
-    return (
-        f"Chuyến bay từ {origin} -> {destination} ngày mai:\n"
-        f"1. VN123 (08:00) - Giá: 1,500,000 VNĐ (Còn vé)\n"
-        f"2. VJ456 (14:30) - Giá: 1,200,000 VNĐ (Còn vé)"
-    )
+    return "Chức năng track_shipment đã được khai báo nhưng chưa triển khai cụ thể."
+
+
+def create_return_request(order_id: str, reason: str, item_id: str) -> str:
+    """
+    Tạo yêu cầu đổi trả cho một sản phẩm trong đơn hàng.
+
+    Args:
+        order_id (str): Mã đơn hàng liên quan.
+        reason (str): Lý do đổi trả.
+        item_id (str): Mã sản phẩm cần đổi trả.
+
+    Returns:
+        str: Kết quả khởi tạo yêu cầu đổi trả, gồm bước tiếp theo hoặc thông báo lỗi nếu không hợp lệ.
+    """
+    return "Chức năng create_return_request đã được khai báo nhưng chưa triển khai cụ thể."
+
+
+def check_return_policy(order_date: str, product_type: str) -> str:
+    """
+    Kiểm tra chính sách đổi trả cho sản phẩm dựa trên ngày đặt và loại sản phẩm.
+
+    Args:
+        order_date (str): Ngày đặt hàng (ví dụ: '2026-07-28').
+        product_type (str): Loại sản phẩm để xác định điều kiện đổi trả.
+
+    Returns:
+        str: Thông tin có thể đổi trả, deadline và điều kiện áp dụng.
+    """
+    return "Chức năng check_return_policy đã được khai báo nhưng chưa triển khai cụ thể."
 
 
 # Danh sách các tool được đăng ký để Agent sử dụng
 AVAILABLE_TOOLS = {
-    "get_weather": get_weather,
-    "search_flights": search_flights,
+    "get_order": get_order,
+    "track_shipment": track_shipment,
+    "create_return_request": create_return_request,
+    "check_return_policy": check_return_policy,
 }
