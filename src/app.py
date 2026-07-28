@@ -39,7 +39,7 @@ def load_test_cases():
         return json.load(f)
 
 
-def run_baseline_chatbot(user_query: str, provider):
+def run_baseline_chatbot(user_query: str, provider, return_details: bool = False) -> Dict[str, Any]:
     """
     Dựng Chatbot gốc (Baseline) không có công cụ.
     """
