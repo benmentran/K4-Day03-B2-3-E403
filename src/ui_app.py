@@ -155,12 +155,6 @@ with main_col:
             else:
                 result = run_react_agent(user_prompt, provider, return_details=True)
                 answer = result["final_answer"]
-                if result.get("steps"):
-                    steps_text = "\n".join(
-                        f"- Step {i}: {step['thought']} → {step['action']} → {step['observation']}"
-                        for i, step in enumerate(result["steps"], start=1)
-                    )
-                    answer = f"{answer}\n\n🧭 Chi tiết luồng ReAct:\n{steps_text}"
 
         st.session_state.messages.append({"role": "assistant", "content": answer})
         st.rerun()

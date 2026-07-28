@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import re
+from typing import Any, Dict
 from dotenv import load_dotenv
 
 # Đảm bảo import các module cùng thư mục src/ hoạt động mượt mà
@@ -49,6 +50,14 @@ def run_baseline_chatbot(user_query: str, provider, return_details: bool = False
     # Gọi LLM Provider thực hiện sinh câu trả lời
     response = provider.generate(user_query, system_prompt=CHATBOT_BASELINE_PROMPT)
     print(f"🤖 Chatbot trả lời:\n{response}")
+    
+    result = {"response": response}
+    if return_details:
+        result["details"] = {
+            "system_prompt": CHATBOT_BASELINE_PROMPT,
+            "query": user_query,
+        }
+    return result
 
 
 def parse_agent_response(response: str) -> tuple[str, str | None, str | None]:
@@ -136,7 +145,7 @@ def append_trace_to_doc(test_id: int, question: str, history: list[dict], final_
         f.writelines(trace_lines)
 
 
-def run_react_agent(user_query: str, provider):
+def run_react_agent(user_query: str, provider, return_details: bool = False) -> Dict[str, Any]:
     """Duyệt vòng lặp ReAct Agent và retry nếu chọn sai tool hoặc tool trả về lỗi."""
     print(f"\n🤖 [REACT AGENT] Câu hỏi: {user_query}")
     history = []
@@ -178,7 +187,20 @@ def run_react_agent(user_query: str, provider):
     if not final_answer and step >= MAX_ITERATIONS:
         print(f"🛡️ GUARDRAIL TRIGGERED: Đã đạt giới hạn tối đa {MAX_ITERATIONS} bước. Ngắt lặp an toàn!")
 
-    return history, final_answer
+    if not final_answer:
+        final_answer = history[-1]["observation"] if history else "Agent không trả lời được."
+
+    result = {
+        "final_answer": final_answer,
+        "steps": history,
+    }
+    if return_details:
+        result["details"] = {
+            "system_prompt": REACT_SYSTEM_PROMPT,
+            "query": user_query,
+            "iterations": step,
+        }
+    return result
 
 
 def run_all_tests(provider):

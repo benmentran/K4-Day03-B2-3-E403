@@ -135,6 +135,12 @@ class MockProvider(BaseLLMProvider):
     """Offline Mock Provider (Cho bài test không cần kết nối API)"""
     def generate(self, prompt: str, system_prompt: str = "") -> str:
         text = prompt.lower()
+        if "dh67890" in text and "observation" in text:
+            return "Thought: Đã xác minh thông tin đơn hàng.\nFinal Answer: Đối với đơn DH67890 bị lỗi khi mở hộp, bạn được hoàn 100% giá trị đơn hàng."
+        if "calculate_refund_amount" in text or ("hoàn" in text and "dh67890" in text):
+            return "Thought: Đã xác minh điều kiện đổi trả, bây giờ tính tiền hoàn.\nAction: calculate_refund_amount['DH67890', 'defective']"
+        if "check_return_eligibility" in text or (("đổi trả" in text or "trả hàng" in text) and "dh67890" in text):
+            return "Thought: Cần kiểm tra điều kiện đổi trả cho đơn này.\nAction: check_return_eligibility['DH67890']"
         if "lookup_order" in text or "dh12345" in text or "dh67890" in text or "dh55555" in text or "khongtontai999" in text:
             if "dh12345" in text:
                 return "Thought: Cần tra cứu trạng thái đơn hàng.\nAction: lookup_order['DH12345']"
@@ -144,10 +150,6 @@ class MockProvider(BaseLLMProvider):
                 return "Thought: Cần kiểm tra đơn quá hạn và không tự động hoàn tiền.\nAction: lookup_order['DH55555']"
             if "khongtontai999" in text:
                 return "Thought: Cần xác minh mã đơn và phản hồi trung thực.\nAction: lookup_order['KHONGTONTAI999']"
-        if "check_return_eligibility" in text or "đổi trả" in text and "dh67890" in text:
-            return "Thought: Cần kiểm tra điều kiện đổi trả cho đơn này.\nAction: check_return_eligibility['DH67890']"
-        if "calculate_refund_amount" in text or "hoàn" in text and "dh67890" in text:
-            return "Thought: Đã xác minh điều kiện đổi trả, bây giờ tính tiền hoàn.\nAction: calculate_refund_amount['DH67890', 'defective']"
         if "không tự động" in text or "escalate" in text:
             return "Thought: Tool không thể hoàn tiền do quá hạn, cần chuyển sang hỗ trợ nhân viên.\nAction: escalate_to_human['DH55555']"
         if "chính sách đổi trả" in text and "shop" in text:
